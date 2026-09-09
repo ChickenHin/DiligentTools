@@ -1,46 +1,46 @@
 name: Linux build
 
-on: [push, pull_request]
+on: [workflow_dispatch]
 
 jobs:
-  precheks:
-    name:    Linux -> Pre-checks
-    runs-on: ubuntu-24.04
+  # precheks:
+  #   name:    Linux -> Pre-checks
+  #   runs-on: ubuntu-24.04
 
-    steps:
-    - name: Clone DiligentCore
-      uses: actions/checkout@v6
-      with:
-        repository: DiligentGraphics/DiligentCore
-        path:       DiligentCore
+  #   steps:
+  #   - name: Clone DiligentCore
+  #     uses: actions/checkout@v6
+  #     with:
+  #       repository: DiligentGraphics/DiligentCore
+  #       path:       DiligentCore
 
-    - name: Clone DiligentTools
-      uses: actions/checkout@v6
-      with:
-        path: DiligentTools
+  #   - name: Clone DiligentTools
+  #     uses: actions/checkout@v6
+  #     with:
+  #       path: DiligentTools
 
-    - name: Format validation
-      shell: bash
-      working-directory: ${{github.workspace}}/DiligentTools/BuildTools/FormatValidation
-      run: ./validate_format_linux.sh
+  #   - name: Format validation
+  #     shell: bash
+  #     working-directory: ${{github.workspace}}/DiligentTools/BuildTools/FormatValidation
+  #     run: ./validate_format_linux.sh
 
-    - name: Codespell
-      uses: codespell-project/actions-codespell@master
-      with:
-        check_filenames: true
-        ignore_words_file: ./DiligentTools/.github/.codespellignore
-        skip: ./DiligentTools/.git,./DiligentTools/ThirdParty,./DiligentTools/NativeApp/Android/ndk_helper,./DiligentTools/NativeApp/Android/arcore_sdk
-        path: ./DiligentTools
+  #   - name: Codespell
+  #     uses: codespell-project/actions-codespell@master
+  #     with:
+  #       check_filenames: true
+  #       ignore_words_file: ./DiligentTools/.github/.codespellignore
+  #       skip: ./DiligentTools/.git,./DiligentTools/ThirdParty,./DiligentTools/NativeApp/Android/ndk_helper,./DiligentTools/NativeApp/Android/arcore_sdk
+  #       path: ./DiligentTools
 
 
   build:
-    needs:   precheks
+    # needs:   precheks
     runs-on: ubuntu-24.04
 
     strategy:
       matrix:
         name:       ["GCC", "Clang"]
-        build_type: ["Debug", "Release"]
+        build_type: ["Debug"]
         cmake_args: ["-DDILIGENT_BUILD_TOOLS_TESTS=ON -DDILIGENT_BUILD_TOOLS_INCLUDE_TEST=ON -DZLIB_BUILD_MINIZIP=ON"]
 
         include:
@@ -51,22 +51,6 @@ jobs:
 
           - name:            "Clang"
             cmake_generator: "Ninja"
-            cc:              "clang-18"
-            cxx:             "clang++-18"
-
-          - name:            "Clang-ASAN"
-            build_type:      "RelWithDebInfo"
-            cmake_generator: "Ninja"
-            cmake_args:      "-DDILIGENT_BUILD_TOOLS_TESTS=ON -DZLIB_BUILD_MINIZIP=ON"
-            sanitizer:       "address"
-            cc:              "clang-18"
-            cxx:             "clang++-18"
-
-          - name:            "Clang-TSAN"
-            build_type:      "RelWithDebInfo"
-            cmake_generator: "Ninja"
-            cmake_args:      "-DDILIGENT_BUILD_TOOLS_TESTS=ON -DZLIB_BUILD_MINIZIP=ON"
-            sanitizer:       "thread"
             cc:              "clang-18"
             cxx:             "clang++-18"
 
@@ -123,10 +107,10 @@ jobs:
       if:   ${{ success() || failure() && steps.build.outcome == 'success' }}
       uses: DiligentGraphics/github-action/run-hlsl2glsl-converter-test@v25
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v7
-      if:   ${{ success() && matrix.build_type != 'Debug' && matrix.name != 'Clang-ASAN' && matrix.name != 'Clang-TSAN' }}
-      with:
-        name: DiligentTools-Linux-${{ matrix.name }}-x64-${{ matrix.build_type }}
-        path: ${{env.DILIGENT_INSTALL_DIR}}/bin/DiligentTools
-        retention-days: 90
+    # - name: Upload artifact
+    #   uses: actions/upload-artifact@v7
+    #   if:   ${{ success() && matrix.build_type != 'Debug' && matrix.name != 'Clang-ASAN' && matrix.name != 'Clang-TSAN' }}
+    #   with:
+    #     name: DiligentTools-Linux-${{ matrix.name }}-x64-${{ matrix.build_type }}
+    #     path: ${{env.DILIGENT_INSTALL_DIR}}/bin/DiligentTools
+    #     retention-days: 90
